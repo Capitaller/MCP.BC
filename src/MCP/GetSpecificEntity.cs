@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Mcp;
-using Microsoft.Extensions.Configuration;
 using MCP.BusinessCentral.Infrastructure;
 
 namespace MCP.BusinessCentral.Triggers
@@ -12,11 +11,10 @@ namespace MCP.BusinessCentral.Triggers
         private const string ToolDescription = "Makes request to specific Business Central entity to retrieve data";
         private const string ToolPropEntityName = "Entity Name";
         private const string ToolPropEntityDescription = "The BC entity to retrieve (e.g., 'employees')";
-        private readonly IConfiguration _configuration;
-
-        public GetSpecificEndpoint(IConfiguration configuration)
+        private readonly Client _client;
+        public GetSpecificEndpoint(Client client)
         {
-            _configuration = configuration;
+            _client = client;
         }
 
         [Function("get_entity")]
@@ -27,8 +25,7 @@ namespace MCP.BusinessCentral.Triggers
         {
             try
             {
-                using var bcClient = new Client(_configuration);
-                var json = await bcClient.GetAsync(entityName ?? string.Empty);
+                var json = await _client.GetAsync();
 
                 return new ContentResult
                 {
