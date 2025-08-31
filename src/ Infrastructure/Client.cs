@@ -1,27 +1,25 @@
 using System.Net.Http.Headers;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace MCP.BusinessCentral.Infrastructure
 {
-    public class Client : IDisposable
+    public class Client
     {
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl;
         private readonly string _username;
         private readonly string _password;
-        private bool _disposed = false;
 
-        public Client(IConfiguration configuration)
+        public Client(IOptionsSnapshot<BusinessCentralOptions> options, IHttpClientFactory httpClientFactory)
         {
-            _httpClient = new HttpClient();
-            _baseUrl = configuration["BusinessCentral:BaseUrl"] 
-                ?? throw new ArgumentNullException(nameof(configuration), "BusinessCentral:BaseUrl configuration is required");
-            _username = configuration["BusinessCentral:Username"] 
-                ?? throw new ArgumentNullException(nameof(configuration), "BusinessCentral:Username configuration is required");
-            _password = configuration["BusinessCentral:Password"] 
-                ?? throw new ArgumentNullException(nameof(configuration), "BusinessCentral:Password configuration is required");
-            
+            var cfg = options.Value ?? throw new ArgumentNullException(nameof(options.Value));
+
+            _httpClient = httpClientFactory.CreateClient(nameof(Client));
+            _baseUrl = cfg.BaseUrl;
+            _username = cfg.Username;
+            _password = cfg.Password;
+
             SetupAuthentication();
         }
 
@@ -32,7 +30,7 @@ namespace MCP.BusinessCentral.Infrastructure
                 new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         }
 
-        public async Task<string> GetAsync(string endpoint = "")
+    public async Task<string> GetAsync(string? endpoint = null)
         {
             var url = string.IsNullOrWhiteSpace(endpoint) ? _baseUrl : $"{_baseUrl}/{endpoint}";
             var response = await _httpClient.GetAsync(url);
@@ -43,21 +41,6 @@ namespace MCP.BusinessCentral.Infrastructure
             }
 
             return await response.Content.ReadAsStringAsync();
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed && disposing)
-            {
-                _httpClient?.Dispose();
-                _disposed = true;
-            }
         }
     }
 }

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Mcp;
-using Microsoft.Extensions.Configuration;
 using MCP.BusinessCentral.Infrastructure;
+using System.Text.Json.Nodes;
 
 namespace MCP.BusinessCentral.Triggers
 {
@@ -10,33 +10,18 @@ namespace MCP.BusinessCentral.Triggers
     {
         private const string ToolName = "get_available_entity_sets";
         private const string ToolDescription = "List available Business Central Entity Sets to select the most suitable one.";
-        private readonly IConfiguration _configuration;
-
-        public GetAvailableEntitySets(IConfiguration configuration)
+        private readonly Client _client;
+        public GetAvailableEntitySets(Client client)
         {
-            _configuration = configuration;
+            _client = client;
         }
 
         [Function("get_available_entity_sets")]
         public async Task<IActionResult> Run(
             [McpToolTrigger(ToolName, ToolDescription)] ToolInvocationContext context)
         {
-            try
-            {
-                using var bcClient = new Client(_configuration);
-                var json = await bcClient.GetAsync();
-
-                return new ContentResult
-                {
-                    Content = json,
-                    ContentType = "application/json",
-                    StatusCode = 200
-                };
-            }
-            catch (HttpRequestException)
-            {
-                return new StatusCodeResult(500);
-            }
+                var json = await _client.GetAsync();
+                return new OkObjectResult(JsonNode.Parse(json));
         }
     }
 }

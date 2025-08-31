@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Mcp;
-using Microsoft.Extensions.Configuration;
 using MCP.BusinessCentral.Infrastructure;
+using System.Text.Json.Nodes;
 
 namespace MCP.BusinessCentral.Triggers
 {
@@ -12,11 +12,10 @@ namespace MCP.BusinessCentral.Triggers
         private const string ToolDescription = "Makes request to specific Business Central entity to retrieve data";
         private const string ToolPropEntityName = "Entity Name";
         private const string ToolPropEntityDescription = "The BC entity to retrieve (e.g., 'employees')";
-        private readonly IConfiguration _configuration;
-
-        public GetSpecificEndpoint(IConfiguration configuration)
+        private readonly Client _client;
+        public GetSpecificEndpoint(Client client)
         {
-            _configuration = configuration;
+            _client = client;
         }
 
         [Function("get_entity")]
@@ -25,22 +24,8 @@ namespace MCP.BusinessCentral.Triggers
             [McpToolProperty(ToolPropEntityName, "string", ToolPropEntityDescription)] string? entityName
         )
         {
-            try
-            {
-                using var bcClient = new Client(_configuration);
-                var json = await bcClient.GetAsync(entityName ?? string.Empty);
-
-                return new ContentResult
-                {
-                    Content = json,
-                    ContentType = "application/json",
-                    StatusCode = 200
-                };
-            }
-            catch (HttpRequestException)
-            {
-                return new StatusCodeResult(500);
-            }
+           var json = await _client.GetAsync(entityName);
+           return new OkObjectResult(JsonNode.Parse(json));
         }
     }
 }
