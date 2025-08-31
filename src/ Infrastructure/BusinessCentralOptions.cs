@@ -6,8 +6,6 @@ namespace MCP.BusinessCentral.Infrastructure
     {
         public const string SectionName = "BusinessCentral";
 
-        [Required]
-        [Url]
         public string BaseUrl { get; set; } = string.Empty;
 
         [Required]

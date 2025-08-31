@@ -13,13 +13,12 @@ namespace MCP.BusinessCentral.Infrastructure
 
         public Client(IOptionsSnapshot<BusinessCentralOptions> options, IHttpClientFactory httpClientFactory)
         {
-            if (options == null) throw new ArgumentNullException(nameof(options));
             var cfg = options.Value ?? throw new ArgumentNullException(nameof(options.Value));
 
             _httpClient = httpClientFactory.CreateClient(nameof(Client));
-            _baseUrl = cfg.BaseUrl ?? throw new ArgumentNullException(nameof(cfg.BaseUrl));
-            _username = cfg.Username ?? throw new ArgumentNullException(nameof(cfg.Username));
-            _password = cfg.Password ?? throw new ArgumentNullException(nameof(cfg.Password));
+            _baseUrl = cfg.BaseUrl;
+            _username = cfg.Username;
+            _password = cfg.Password;
 
             SetupAuthentication();
         }

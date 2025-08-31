@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Mcp;
 using MCP.BusinessCentral.Infrastructure;
+using System.Text.Json.Nodes;
 
 namespace MCP.BusinessCentral.Triggers
 {
@@ -23,21 +24,8 @@ namespace MCP.BusinessCentral.Triggers
             [McpToolProperty(ToolPropEntityName, "string", ToolPropEntityDescription)] string? entityName
         )
         {
-            try
-            {
-                var json = await _client.GetAsync();
-
-                return new ContentResult
-                {
-                    Content = json,
-                    ContentType = "application/json",
-                    StatusCode = 200
-                };
-            }
-            catch (HttpRequestException)
-            {
-                return new StatusCodeResult(500);
-            }
+           var json = await _client.GetAsync(entityName);
+           return new OkObjectResult(JsonNode.Parse(json));
         }
     }
 }
